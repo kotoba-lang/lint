@@ -28,7 +28,7 @@
     editor still has it), `:diagnostics` holds one `:error` lsp diagnostic.
   - Trailing garbage after a value is reported as a `:warning` diagnostic."
   [source]
-  (let [eof (Object.)]                            ; unique sentinel
+  (let [eof #?(:clj (Object.) :cljs (js/Object.))] ; unique sentinel
     (try
       (let [data (edn/read-string {:eof eof} source)]
         (cond
