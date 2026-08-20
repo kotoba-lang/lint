@@ -20,14 +20,7 @@
   (lsp/diagnostic (lsp/range (lsp/position 0 0) (lsp/position 0 0))
                   :error "lint" (str msg)))
 
-(defn lint-source
-  "Lint an EDN source string. Returns `{:ok? :canonical :diagnostics}`.
-  - On success: `:ok?` true, `:canonical` is the fmt-canonicalized text,
-    `:diagnostics` is `[]`.
-  - On parse failure: `:ok?` false, `:canonical` is the original source (so the
-    editor still has it), `:diagnostics` holds one `:error` lsp diagnostic.
-  - Trailing garbage after a value is reported as a `:warning` diagnostic."
-  [source]
+(defn- lint-source* [source]
   (let [eof #?(:clj (Object.) :cljs (js/Object.))] ; unique sentinel
     (try
       (let [data (edn/read-string {:eof eof} source)]
@@ -47,7 +40,34 @@
       (catch #?(:clj Throwable :cljs :default) e
         {:ok? false
          :canonical source
-         :diagnostics [(parse-diagnostic (.getMessage e))]}))))
+         ;; `ex-message`, not `(.getMessage e)`. The catch clause above was
+         ;; already written portably as `#?(:clj Throwable :cljs :default)`,
+         ;; but its BODY was not -- so on ClojureScript every parse failure
+         ;; threw "Could not find instance method: getMessage" instead of
+         ;; producing the diagnostic this function exists to produce.
+         ;; Measured 2026-08-20: three of this namespace's tests errored on
+         ;; nbb, all of them on the failure path.
+         :diagnostics [(parse-diagnostic (ex-message e))]}))))
+
+
+(defn lint-source
+  "Lint an EDN source string. Returns `{:ok? :canonical :diagnostics}`.
+  - On success: `:ok?` true, `:canonical` is the fmt-canonicalized text,
+    `:diagnostics` is `[]`.
+  - On parse failure: `:ok?` false, `:canonical` is the original source (so the
+    editor still has it), `:diagnostics` holds one `:error` lsp diagnostic.
+  - Trailing garbage after a value is reported as a `:warning` diagnostic."
+  [source]
+  ;; Blank input is answered before the reader is involved. The sentinel
+  ;; below relies on `:eof`, and ClojureScript's `edn/read-string` IGNORES
+  ;; that option: measured 2026-08-20 on nbb, `(edn/read-string {:eof eof} "")`
+  ;; returns nil rather than the sentinel, so `identical?` was false, the code
+  ;; fell through to formatting nil, and `:canonical` came back as the STRING
+  ;; "nil" instead of "". Not an error -- a plausible wrong answer handed to
+  ;; an editor.
+  (if (str/blank? source)
+    {:ok? true :canonical "" :diagnostics []}
+    (lint-source* source)))
 
 (defn lint-file
   "Read a source file via an injected `IFilesystem` (`fsb`) at `path`, then
