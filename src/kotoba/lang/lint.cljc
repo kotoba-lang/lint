@@ -11,7 +11,7 @@
             [kotoba.lang.lsp :as lsp]
             [kotoba.lang.coll :as c]
             [clojure.edn :as edn]
-            [clojure.string :as str]))
+            [kotoba.lang.text :as str]))
 
 (defn- parse-diagnostic
   "Build an lsp diagnostic for a parse failure. EDN parse errors do not carry
