@@ -10,7 +10,7 @@
             [kotoba.lang.fmt :as fmt]
             [kotoba.lang.lsp :as lsp]
             [kotoba.lang.coll :as c]
-            [clojure.edn :as edn]
+            [kotoba.lang.edn :as edn]
             [kotoba.lang.text :as str]))
 
 (defn- parse-diagnostic
@@ -58,13 +58,21 @@
     editor still has it), `:diagnostics` holds one `:error` lsp diagnostic.
   - Trailing garbage after a value is reported as a `:warning` diagnostic."
   [source]
-  ;; Blank input is answered before the reader is involved. The sentinel
-  ;; below relies on `:eof`, and ClojureScript's `edn/read-string` IGNORES
-  ;; that option: measured 2026-08-20 on nbb, `(edn/read-string {:eof eof} "")`
-  ;; returns nil rather than the sentinel, so `identical?` was false, the code
-  ;; fell through to formatting nil, and `:canonical` came back as the STRING
-  ;; "nil" instead of "". Not an error -- a plausible wrong answer handed to
-  ;; an editor.
+  ;; Blank input is answered before the reader is involved. That guard was
+  ;; added on 2026-08-20 after measuring that `(edn/read-string {:eof eof} "")`
+  ;; returned nil rather than the sentinel on nbb, so `identical?` was false,
+  ;; the code fell through to formatting nil, and `:canonical` came back as the
+  ;; STRING "nil" instead of "". Not an error -- a plausible wrong answer
+  ;; handed to an editor.
+  ;;
+  ;; The note that came with it said ClojureScript "IGNORES that option". Re-
+  ;; measured 2026-09-08, that is wider than the truth: cljs.reader honours
+  ;; `:eof` for whitespace-only and comment-only input and returns nil only for
+  ;; the EMPTY STRING. The reader is now kotoba.lang.edn, which answers the
+  ;; sentinel for all four, so the divergence this guard was defending against
+  ;; no longer exists. The guard stays anyway -- answering blank input without
+  ;; involving a reader at all is cheaper and clearer than relying on one --
+  ;; but it is now a shortcut, not a workaround.
   (if (str/blank? source)
     {:ok? true :canonical "" :diagnostics []}
     (lint-source* source)))
