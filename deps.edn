@@ -5,6 +5,19 @@
  ;; consumer of fmt and lsp (M5 for both). No third-party deps; .cljc.
  ;; See ADR-kotoba-lang-foundational-stdlib.md.
  :deps {
+        io.github.kotoba-lang/lint-lint-file
+        {:git/url "https://github.com/kotoba-lang/lint-lint-file.git"
+         :git/sha "f0239cb0db0a3674ec27b27b00e29abeeed24b7c"}
+        io.github.kotoba-lang/lint-lint-source
+        {:git/url "https://github.com/kotoba-lang/lint-lint-source.git"
+         :git/sha "bd2ecd18c27a035fa5f9a75354fda035c6b3d063"}
+        io.github.kotoba-lang/lint-ok
+        {:git/url "https://github.com/kotoba-lang/lint-ok.git"
+         :git/sha "1a7fd8afc896ac78f149c37860ab71f126e7f5a9"}
+        io.github.kotoba-lang/lint-summary
+        {:git/url "https://github.com/kotoba-lang/lint-summary.git"
+         :git/sha "fdfb8726071eb05dc057dd0f3f65f7bb80a55129"}
+
         ;; kotoba.lang.edn, not clojure.edn. Pinned as an explicit floor:
         ;; tools.deps takes the NEWEST sha it is shown, so without a floor here
         ;; this repo silently rides whatever a sibling happens to name.
