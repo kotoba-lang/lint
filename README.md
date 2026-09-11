@@ -52,5 +52,5 @@ io.github.kotoba-lang/lint {:git/sha "<sha>"}
 ## Verify
 
 ```sh
-clojure -M:test
+kbb -M:test
 ```
