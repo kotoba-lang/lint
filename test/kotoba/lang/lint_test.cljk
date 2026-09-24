@@ -1,5 +1,5 @@
 (ns kotoba.lang.lint-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.lang.lint :as lint]
             [kotoba.lang.fs :as fs]))
 
